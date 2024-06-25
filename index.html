@@ -13,11 +13,16 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
+            background-size: cover;
+            background-position: center;
         }
         .container {
             text-align: center;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
         }
-        select, input {
+        select, input, button {
             margin: 10px;
             padding: 10px;
             font-size: 16px;
@@ -25,6 +30,10 @@
         #timer {
             font-size: 48px;
             margin: 20px;
+        }
+        #message {
+            font-size: 24px;
+            margin: 10px;
         }
     </style>
 </head>
@@ -52,25 +61,38 @@
         <br>
         <button onclick="startTimer()">開始計時</button>
         <div id="timer">25:00</div>
+        <div id="message"></div>
     </div>
     <script>
         let timer;
         let timeLeft = 1500; // 25 分鐘
+        let messages = ["你做得很棒！", "繼續加油！", "你能做到的！", "保持專注！"];
+        let images = [
+            'url("https://example.com/image1.jpg")',
+            'url("https://example.com/image2.jpg")',
+            'url("https://example.com/image3.jpg")',
+            'url("https://example.com/image4.jpg")'
+        ];
 
         function startTimer() {
             clearInterval(timer);
             timeLeft = 1500; // 25 分鐘
             document.getElementById('timer').textContent = '25:00';
+            document.getElementById('message').textContent = getRandomMessage();
+            changeBackgroundImage();
             timer = setInterval(() => {
                 if (timeLeft <= 0) {
                     clearInterval(timer);
                     playSound();
+                    document.getElementById('message').textContent = getRandomMessage();
+                    changeBackgroundImage();
                 } else {
                     timeLeft--;
                     let minutes = Math.floor(timeLeft / 60);
                     let seconds = timeLeft % 60;
                     document.getElementById('timer').textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
                 }
+                saveState();
             }, 1000);
         }
 
@@ -81,6 +103,31 @@
             let audio = new Audio(`https://api.example.com/tts?model=${voiceModel}&style=${voiceStyle}&text=${encodeURIComponent(textToSpeech)}`);
             audio.play();
         }
+
+        function getRandomMessage() {
+            return messages[Math.floor(Math.random() * messages.length)];
+        }
+
+        function changeBackgroundImage() {
+            document.body.style.backgroundImage = images[Math.floor(Math.random() * images.length)];
+        }
+
+        function saveState() {
+            localStorage.setItem('timeLeft', timeLeft);
+            localStorage.setItem('message', document.getElementById('message').textContent);
+            localStorage.setItem('backgroundImage', document.body.style.backgroundImage);
+        }
+
+        function loadState() {
+            if (localStorage.getItem('timeLeft')) {
+                timeLeft = parseInt(localStorage.getItem('timeLeft'));
+                document.getElementById('timer').textContent = `${Math.floor(timeLeft / 60)}:${timeLeft % 60 < 10 ? '0' : ''}${timeLeft % 60}`;
+                document.getElementById('message').textContent = localStorage.getItem('message');
+                document.body.style.backgroundImage = localStorage.getItem('backgroundImage');
+            }
+        }
+
+        window.onload = loadState;
     </script>
 </body>
 </html>
