@@ -7,127 +7,189 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+            background-color: #f0f0f0;
             margin: 0;
-            background-size: cover;
-            background-position: center;
+            padding: 0;
         }
+
         .container {
-            text-align: center;
-            background: rgba(255, 255, 255, 0.8);
+            max-width: 600px;
+            margin: 50px auto;
             padding: 20px;
-            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
+        h1, h2 {
+            text-align: center;
+        }
+
+        .timer-section, .youtube-section, .todo-section {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
         select, input, button {
-            margin: 10px;
+            width: 100%;
             padding: 10px;
-            font-size: 16px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
         }
-        #timer {
-            font-size: 48px;
-            margin: 20px;
+
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
         }
-        #message {
-            font-size: 24px;
-            margin: 10px;
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #countdown {
+            font-size: 2em;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: #eee;
+            padding: 10px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        li.completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        li button {
+            background-color: #dc3545;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        li button:hover {
+            background-color: #c82333;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>番茄鐘待辦工具</h1>
-        <label for="voiceModel">選定聲音模型:</label>
-        <select id="voiceModel">
-            <option value="tts-1">tts-1</option>
-            <option value="tts-1-hd">tts-1-hd</option>
-        </select>
-        <br>
-        <label for="voiceStyle">選定聲音樣式:</label>
-        <select id="voiceStyle">
-            <option value="Alloy">Alloy</option>
-            <option value="Echo">Echo</option>
-            <option value="Fable">Fable</option>
-            <option value="Onyx">Onyx</option>
-            <option value="Nova">Nova</option>
-            <option value="Shimmer">Shimmer</option>
-        </select>
-        <br>
-        <label for="textToSpeech">輸入要轉語音的文字:</label>
-        <input type="text" id="textToSpeech" placeholder="輸入文字">
-        <br>
-        <button onclick="startTimer()">開始計時</button>
-        <div id="timer">25:00</div>
-        <div id="message"></div>
+        
+        <div class="timer-section">
+            <label for="timer">選擇計時器時間：</label>
+            <select id="timer">
+                <option value="60">1 分鐘</option>
+                <option value="300">5 分鐘</option>
+                <option value="600">10 分鐘</option>
+                <option value="900">15 分鐘</option>
+                <option value="1200">20 分鐘</option>
+                <option value="1500">25 分鐘</option>
+                <option value="1800">30 分鐘</option>
+                <option value="2400">40 分鐘</option>
+                <option value="36300">605 分鐘</option>
+            </select>
+            <button onclick="startTimer()">開始計時</button>
+            <div id="countdown"></div>
+        </div>
+        
+        <div class="youtube-section">
+            <label for="youtubeUrl">輸入 YouTube 影片連結：</label>
+            <input type="text" id="youtubeUrl">
+            <button onclick="setYouTubeUrl()">設置影片</button>
+        </div>
+
+        <div class="todo-section">
+            <h2>待辦事項</h2>
+            <input type="text" id="newTask" placeholder="添加新的待辦事項">
+            <button onclick="addTask()">添加</button>
+            <ul id="taskList"></ul>
+        </div>
     </div>
+
     <script>
-        let timer;
-        let timeLeft = 1500; // 25 分鐘
-        let messages = ["你做得很棒！", "繼續加油！", "你能做到的！", "保持專注！"];
-        let images = [
-            'url("https://example.com/image1.jpg")',
-            'url("https://example.com/image2.jpg")',
-            'url("https://example.com/image3.jpg")',
-            'url("https://example.com/image4.jpg")'
-        ];
+        let countdownTimer;
+        let youtubeUrl = "";
 
         function startTimer() {
-            clearInterval(timer);
-            timeLeft = 1500; // 25 分鐘
-            document.getElementById('timer').textContent = '25:00';
-            document.getElementById('message').textContent = getRandomMessage();
-            changeBackgroundImage();
-            timer = setInterval(() => {
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    playSound();
-                    document.getElementById('message').textContent = getRandomMessage();
-                    changeBackgroundImage();
+            const timerSelect = document.getElementById('timer');
+            const countdown = document.getElementById('countdown');
+            let time = parseInt(timerSelect.value);
+
+            clearInterval(countdownTimer);
+            
+            countdownTimer = setInterval(() => {
+                if (time <= 0) {
+                    clearInterval(countdownTimer);
+                    countdown.innerHTML = "時間到!";
+                    playYouTubeVideo();
                 } else {
-                    timeLeft--;
-                    let minutes = Math.floor(timeLeft / 60);
-                    let seconds = timeLeft % 60;
-                    document.getElementById('timer').textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                    time--;
+                    countdown.innerHTML = formatTime(time);
                 }
-                saveState();
             }, 1000);
         }
 
-        function playSound() {
-            let voiceModel = document.getElementById('voiceModel').value;
-            let voiceStyle = document.getElementById('voiceStyle').value;
-            let textToSpeech = document.getElementById('textToSpeech').value;
-            let audio = new Audio(`https://api.example.com/tts?model=${voiceModel}&style=${voiceStyle}&text=${encodeURIComponent(textToSpeech)}`);
-            audio.play();
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         }
 
-        function getRandomMessage() {
-            return messages[Math.floor(Math.random() * messages.length)];
+        function setYouTubeUrl() {
+            youtubeUrl = document.getElementById('youtubeUrl').value;
         }
 
-        function changeBackgroundImage() {
-            document.body.style.backgroundImage = images[Math.floor(Math.random() * images.length)];
-        }
-
-        function saveState() {
-            localStorage.setItem('timeLeft', timeLeft);
-            localStorage.setItem('message', document.getElementById('message').textContent);
-            localStorage.setItem('backgroundImage', document.body.style.backgroundImage);
-        }
-
-        function loadState() {
-            if (localStorage.getItem('timeLeft')) {
-                timeLeft = parseInt(localStorage.getItem('timeLeft'));
-                document.getElementById('timer').textContent = `${Math.floor(timeLeft / 60)}:${timeLeft % 60 < 10 ? '0' : ''}${timeLeft % 60}`;
-                document.getElementById('message').textContent = localStorage.getItem('message');
-                document.body.style.backgroundImage = localStorage.getItem('backgroundImage');
+        function playYouTubeVideo() {
+            if (youtubeUrl) {
+                const videoId = youtubeUrl.split('v=')[1];
+                const iframe = document.createElement('iframe');
+                iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+                iframe.width = '560';
+                iframe.height = '315';
+                document.body.appendChild(iframe);
             }
         }
 
-        window.onload = loadState;
+        function addTask() {
+            const taskList = document.getElementById('taskList');
+            const newTaskInput = document.getElementById('newTask');
+            const taskText = newTaskInput.value.trim();
+            
+            if (taskText) {
+                const li = document.createElement('li');
+                li.innerHTML = `${taskText} <button onclick="removeTask(this)">完成</button>`;
+                taskList.appendChild(li);
+                newTaskInput.value = '';
+            }
+        }
+
+        function removeTask(button) {
+            const li = button.parentElement;
+            li.classList.toggle('completed');
+            if (li.classList.contains('completed')) {
+                button.innerText = '恢復';
+            } else {
+                button.innerText = '完成';
+            }
+        }
     </script>
 </body>
 </html>
